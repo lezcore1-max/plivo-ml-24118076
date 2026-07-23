@@ -97,9 +97,22 @@
     </div>
   </div>
 
+  <!-- Problems We Hit & How We Solved Them -->
+  <div class="card">
+    <h2>Problems We Hit &amp; How We Solved Them</h2>
+    <p>This speedrun required real-time troubleshooting to stay under the 120-minute deadline. Here are the concrete incidents we faced:</p>
+    <ul>
+      <li><strong>BPE Training ETA Too Long:</strong> We originally targeted a BPE vocab of 3072, but at merge 801 we realized the 32-minute ETA was too slow. We killed it and restarted at vocab=1500, based on the observation that critical Devanagari merges saturate by ~merge 600. This saved ~17 minutes of training time.</li>
+      <li><strong>Suspicious Output Formatting:</strong> During param-count verification, an early script formatted the output with commas and emojis. The human operator caught this anomaly and required a raw, unedited terminal paste to guarantee the 2,000,000 parameter constraint was legitimately met.</li>
+      <li><strong>The Silent I/O Bug:</strong> The R1 isolation script contained an I/O buffering bug: <code>eval_bpb</code> ran 2488 serial forward passes before any prints flushed to stdout. This caused 18+ minutes of silent CPU work with zero visible progress. We fixed this by adding <code>-u</code>, <code>flush=True</code>, and reordering the checkpoint save to occur before evaluation.</li>
+      <li><strong>Forced Bundling:</strong> Because the I/O bug burned our time budget for isolated ablations, we made the hard decision to collapse R1/R2/R3/R4 into one bundled final run. We chose to disclose this honestly in the docs rather than hiding the pivot, as strict time management forced our hand.</li>
+    </ul>
+  </div>
+
   <!-- Key changes and why -->
   <div class="card">
     <h2>Why This Configuration</h2>
+    <p>We started from a baseline of 2.3718 bpb, quickly identifying the byte tokenizer's 3x expansion on Devanagari as the critical issue. Our original plan was to isolate four separate experiments (R1-R4) to validate each improvement individually, but time constraints forced us to pivot. <strong>Note: Because of the time compression explained above, this configuration represents a single bundled run rather than four separately validated experiments.</strong></p>
     <table>
       <tr><th>Change</th><th>Reason</th><th>Expected impact</th></tr>
       <tr>
